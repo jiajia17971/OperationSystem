@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hgsoft.zengzhiyingyong.module.rbac.dao.umapper.SubAccMapper">
+    <!-- 用户resultMap -->
+    <resultMap id="sbuAccMap" type="com.hgsoft.zengzhiyingyong.module.rbac.domain.AccountEntity">
+        <id column="id" property="id"/>
+        <result column="cardno" property="cardno"/>
+        <result column="acctype" property="acctype"/>
+        <result column="balance" property="balance"/>
+        <result column="orgid" property="orgid"/>
+
+    </resultMap>
+
+    <!-- subAcc column  -->
+    <select id="searchForRecharge" resultMap="sbuAccMap">
+        select cardno,acctype,balance,orgid from [RechargePlatform].[dbo].[tb_sub_account] with (nolock) where cardno = #{card.faceCardNum}
+    </select>
+
+
+</mapper>

@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hgsoft.zengzhiyingyong.module.rbac.dao.mapper.ConsumeMapper" >
+    <resultMap id="consumeMap" type="com.hgsoft.zengzhiyingyong.module.rbac.domain.ConsumeEntity">
+        <id column="id" property="id"/>
+        <result column="ListNo" property="listno"/>
+        <result column="cardNo" property="faceCardNum"/>
+        <result column="tradeTime" property="businessTime"/>
+        <result column="opCardAmt" property="amount"/>
+        <result column="cardBalance" property="cardBalance"/>
+        <result column="license" property="vehplate"/>
+        <result column="cardType" property="cardType"/>
+        <result column="tradeType" property="tradeType"/>
+        <result column="tradePlace" property="highway"/>
+        <result column="remark" property="remark"/>
+        <result column="headFlow" property="flowHead"/>
+        <result column="tailFlow" property="flowTail"/>
+        <result column="transNo" property="seriNo"/>
+
+
+    </resultMap>
+
+    <!-- 查询账户消费信息 -->
+    <select id="query" resultMap="consumeMap">
+        select row_number() over(order by tradeTime desc) as rownumber ,r.* from (
+            select
+
+                ListNo,
+                paycardId as cardNo,
+                convert(varchar, optime, 120) as tradeTime,
+                case when serviceProviderId is null then InStationName + '|' + StationName
+                else description end as tradePlace,
+                '出口消费' as tradeType,
+                null as opSubAmt,
+                null as subBalance,
+                etcMoney*0.01 as opCardAmt,
+                case when payCardType = 22 then Convert(decimal(18,2),postBalance*0.01)
+                when payCardType = 23 then 0.00
+                end as cardBalance,
+                case when payCardType = 22 then '储值卡'
+                when payCardType = 23 then '记账卡'
+                end as cardType,
+                vehPlate as license,
+                case payCardType
+                when 22 then convert(varchar, optime, 120)
+                when 23 then convert(varchar, accountingdate, 120)
+                else null end as [accountTime],
+                headFlow,
+                tailFlow
+            from
+                [RechargePlatform_Ecleared].[dbo].[CL_Eexit_Cleared] with(nolock)
+            where
+                paycardId = #{faceCardNum} and
+                optime between #{startTime} and #{endTime})r
+    </select>
+    <!-- 根据交易序列号查询流水数据list -->
+    <select id="getByTransNo" resultMap="consumeMap">
+        select row_number() over(order by tradeTime desc) as rownumber ,r.* from (
+            select
+                id,
+                ListNo,
+                paycardId as cardNo,
+                convert(varchar, optime, 120) as tradeTime,
+                case when serviceProviderId is null then InStationName + '|' + StationName
+                else description end as tradePlace,
+                '出口消费' as tradeType,
+                null as opSubAmt,
+                null as subBalance,
+                etcMoney*0.01 as opCardAmt,
+                case when payCardType = 22 then Convert(decimal(18,2),postBalance*0.01)
+                when payCardType = 23 then 0.00
+                end as cardBalance,
+                case when payCardType = 22 then '储值卡'
+                when payCardType = 23 then '记账卡'
+                end as cardType,
+                vehPlate as license,
+                case payCardType
+                when 22 then convert(varchar, optime, 120)
+                when 23 then convert(varchar, accountingdate, 120)
+                else null end as [accountTime],
+                headFlow,
+                tailFlow,
+                transNo
+            from
+                [RechargePlatform_Ecleared].[dbo].[CL_Eexit_Cleared] with(nolock)
+            where
+                paycardId = #{faceCardNum} and
+                <!--transNo &lt;= #{start} and transNo >=  #{end}-->
+                <if test="startTime != null or startTime != ''">
+                    and CONVERT(VARCHAR(10), Optime,120 ) &gt;= #{startTime, jdbcType=VARCHAR}
+                </if>
+                <if test="endTime != null or endTime != ''">
+                    and CONVERT(VARCHAR(10), Optime,120 ) &lt;= #{endTime, jdbcType=VARCHAR}
+                </if>
+                )r order by Optime desc
+    </select>
+    <!-- 根据ids 查找准确存在流水都是位置 -->
+    <select id="query2" resultMap="consumeMap">
+        select row_number() over(order by tradeTime desc) as rownumber ,r.* from (
+            select
+                ListNo,
+                paycardId as cardNo,
+                convert(varchar, optime, 120) as tradeTime,
+                case when serviceProviderId is null then InStationName + '|' + StationName
+                else description end as tradePlace,
+                '出口消费' as tradeType,
+                null as opSubAmt,
+                null as subBalance,
+                etcMoney*0.01 as opCardAmt,
+                case when payCardType = 22 then Convert(decimal(18,2),postBalance*0.01)
+                when payCardType = 23 then 0.00
+                end as cardBalance,
+                case when payCardType = 22 then '储值卡'
+                when payCardType = 23 then '记账卡'
+                end as cardType,
+                vehPlate as license,
+                case payCardType
+                when 22 then convert(varchar, optime, 120)
+                when 23 then convert(varchar, accountingdate, 120)
+                else null end as [accountTime],
+                headFlow,
+                tailFlow
+            from
+                [RechargePlatform_Ecleared].[dbo].[CL_Eexit_Cleared] with(nolock)
+            where
+                paycardId = #{faceCardNum}
+
+        <if test="ids.size() > 0">
+            and id in
+            <foreach item="item" collection="ids" open="(" separator="," close=")">
+                #{item, jdbcType=NUMERIC}
+            </foreach>
+        </if>
+        <if test="startTime != null or startTime != ''">
+            and CONVERT(VARCHAR(10), Optime,120 ) &gt;= #{startTime, jdbcType=VARCHAR}
+        </if>
+        <if test="endTime != null or endTime != ''">
+            and CONVERT(VARCHAR(10), Optime,120 ) &lt;= #{endTime, jdbcType=VARCHAR}
+        </if>
+                )r
+    </select>
+
+    <select id="get" resultMap="consumeMap">
+            select
+            ListNo,
+                paycardId as cardNo,
+                convert(varchar, optime, 120) as tradeTime,
+                case when serviceProviderId is null then InStationName + '|' + StationName
+                else description end as tradePlace,
+                '出口消费' as tradeType,
+                null as opSubAmt,
+                null as subBalance,
+                etcMoney*0.01 as opCardAmt,
+                case when payCardType = 22 then Convert(decimal(18,2),postBalance*0.01)
+                when payCardType = 23 then 0.00
+                end as cardBalance,
+                case when payCardType = 22 then '储值卡'
+                when payCardType = 23 then '记账卡'
+                end as cardType,
+                vehPlate as license,
+                case payCardType
+                when 22 then convert(varchar, optime, 120)
+                when 23 then convert(varchar, accountingdate, 120)
+                else null end as [accountTime]
+            from [RechargePlatform_Ecleared].[dbo].[CL_Eexit_Cleared] with(nolock) where ListNo = #{inlistno}
+    </select>
+    <!-- 获取起止流水信息-->
+    <select id="getByCondition" resultMap="consumeMap">
+            select top 1
+            ListNo,
+                paycardId as cardNo,
+                convert(varchar, optime, 120) as tradeTime,
+                case when serviceProviderId is null then InStationName + '|' + StationName
+                else description end as tradePlace,
+                '出口消费' as tradeType,
+                null as opSubAmt,
+                null as subBalance,
+                etcMoney*0.01 as opCardAmt,
+                case when payCardType = 22 then Convert(decimal(18,2),postBalance*0.01)
+                when payCardType = 23 then 0.00
+                end as cardBalance,
+                case when payCardType = 22 then '储值卡'
+                when payCardType = 23 then '记账卡'
+                end as cardType,
+                vehPlate as license,
+                case payCardType
+                when 22 then convert(varchar, optime, 120)
+                when 23 then convert(varchar, accountingdate, 120)
+                else null end as [accountTime],
+                headFlow,
+                tailFlow,
+                transNo
+            from [RechargePlatform_Ecleared].[dbo].[CL_Eexit_Cleared] with(nolock) where PayCardId = #{faceCardNum} and CONVERT (VARCHAR(10),Optime,120 ) = #{tradeTime}
+            <if test="mode != null and mode != ''">
+               order by transNo desc
+            </if>
+            <if test="mode == null or mode == ''">
+                order by transNo asc
+            </if>
+    </select>
+
+
+
+    <!-- 统计总数 -->
+    <select id="count" resultType="long">
+        select COUNT(1) from [RechargePlatform_Ecleared].[dbo].[CL_Eexit_Cleared] with(nolock)  where  paycardId = #{faceCardNum}
+         AND InOptime BETWEEN #{startTime} AND #{endTime}
+    </select>
+    <!-- 统计总数 -->
+    <select id="count2" resultType="long">
+        select COUNT(1) from [RechargePlatform_Ecleared].[dbo].[CL_Eexit_Cleared] with(nolock)  where  paycardId = #{faceCardNum}
+        AND Optime BETWEEN #{startTime} AND #{endTime}
+    </select>
+
+    <update id="updateComsumeList">
+        update [RechargePlatform_Ecleared].[dbo].[CL_Eexit_Cleared] set headFlow = #{card.voucherid,jdbcType=VARCHAR},tailFlow = #{card.voucherid,jdbcType=VARCHAR} where ListNo in (#{card.flowHead},#{card.flowTail})
+    </update>
+    <update id="updateConsumeHead">
+        update [RechargePlatform_Ecleared].[dbo].[CL_Eexit_Cleared] set headFlow = #{card.voucherid,jdbcType=VARCHAR} where ListNo = #{card.flowHead}
+    </update>
+    <update id="updateConsumeTail">
+        update [RechargePlatform_Ecleared].[dbo].[CL_Eexit_Cleared] set tailFlow = #{card.voucherid,jdbcType=VARCHAR} where ListNo = #{card.flowTail}
+    </update>
+
+    <insert id="insertLoseDataList">
+        INSERT  INTO [RechargePlatform_Ecleared].[dbo].[CL_Eexit_Cleared] ([ID],[payCardId],[payCardType],[EtcMoney],[Optime],[sychdate],[description],[headFlow],[tailFlow]) VALUES (#{card.listNo,jdbcType=NUMERIC},#{card.faceCardNum,jdbcType=VARCHAR},22,#{card.optAmount,jdbcType=VARCHAR},#{card.tradeTime,jdbcType=TIMESTAMP},getDate(),'开库补充流水',#{card.voucherid,jdbcType=VARCHAR},#{card.voucherid,jdbcType=VARCHAR})
+    </insert>
+
+
+
+</mapper>

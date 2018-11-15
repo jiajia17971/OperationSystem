@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hgsoft.zengzhiyingyong.module.rbac.dao.mapper.UserMapper">
+    <!-- 用户resultMap -->
+    <resultMap id="userMap" type="com.hgsoft.zengzhiyingyong.module.rbac.domain.User">
+        <id column="id" property="id"/>
+        <result column="login_name" property="loginName"/>
+        <result column="user_name" property="userName"/>
+        <result column="password" property="password"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="last_login_time" property="lastLoginTime"/>
+        <collection property="roles" ofType="com.hgsoft.zengzhiyingyong.module.rbac.domain.Role">
+            <result column="role_id" property="id"/>
+        </collection>
+    </resultMap>
+
+    <!-- user column  -->
+    <sql id="userPart">
+      u.id,
+      u.login_name,
+      u.user_name,
+      u.status,
+      u.create_time,
+      u.update_time,
+      u.last_login_time
+    </sql>
+
+    <!-- where条件-->
+    <sql id="whereSql">
+        <where>
+            <if test="user.loginName != null and user.loginName != ''">
+                AND u.login_name like '%' + ltrim(rtrim(#{user.loginName, jdbcType=VARCHAR})) + '%'
+            </if>
+            <if test="user.userName != null and user.userName != ''">
+                AND u.user_name like '%' + ltrim(rtrim(#{user.userName, jdbcType=VARCHAR})) + '%'
+            </if>
+            <if test="user.status != null">
+                AND u.status = #{user.status}
+            </if>
+        </where>
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="query" resultMap="userMap">
+        select
+          top ${size} *
+        from
+        (
+            select
+            row_number() over(order by create_time DESC) as rownumber,
+            <include refid="userPart"/>
+            from
+            tb_user u
+            <include refid="whereSql"/>
+        ) middle where rownumber &gt; #{skip}
+    </select>
+
+    <!-- 统计总数 -->
+    <select id="count" resultType="long">
+        SELECT
+          count(1)
+        FROM
+        tb_user u
+          <include refid="whereSql"/>
+    </select>
+
+    <!-- 根据id获取用户信息 -->
+    <select id="get" resultMap="userMap">
+        SELECT
+          <include refid="userPart"/>,
+          ur.role_id
+        FROM
+          tb_user u LEFT JOIN tb_user_role ur ON u.id = ur.user_id
+        WHERE u.id = #{id}
+    </select>
+
+    <!-- 根据登录名用户信息 -->
+    <select id="getByLoginName" resultMap="userMap">
+        SELECT
+        <include refid="userPart"/>,
+        u.password,
+        ur.role_id
+        FROM
+        tb_user u LEFT JOIN tb_user_role ur ON u.id = ur.user_id
+        WHERE u.login_name = #{loginName}
+    </select>
+
+    <!-- 检查用户名是否重复 -->
+    <select id="countByLoginName" resultType="long">
+        SELECT count(1) FROM tb_user where login_name = ltrim(rtrim(#{user.loginName, jdbcType=VARCHAR}))
+        <if test="user.id != null and user.id != ''">
+            AND id != #{user.id, jdbcType=VARCHAR}
+        </if>
+    </select>
+
+    <!-- 修改用户 -->
+    <update id="update">
+        UPDATE tb_user SET
+          user_name = #{user.userName, jdbcType=VARCHAR},
+          password = #{user.password, jdbcType=VARCHAR},
+          status = #{user.status, jdbcType=NUMERIC},
+          update_time = #{user.updateTime, jdbcType=TIMESTAMP}
+        WHERE id = #{user.id, jdbcType=VARCHAR}
+    </update>
+
+    <!-- 新增用户 -->
+    <insert id="insert">
+        INSERT INTO tb_user(id, login_name, user_name, password, status, create_time, update_time)
+        VALUES (#{user.id, jdbcType=VARCHAR}, #{user.loginName, jdbcType=VARCHAR},
+        #{user.userName, jdbcType=VARCHAR}, #{user.password, jdbcType=VARCHAR},
+        #{user.status, jdbcType=NUMERIC}, #{user.createTime, jdbcType=TIMESTAMP}, #{user.updateTime, jdbcType=TIMESTAMP})
+    </insert>
+
+    <!-- 新增用户角色关系 -->
+    <insert id="insertUserRole">
+        INSERT INTO tb_user_role(user_id, role_id) VALUES
+        <foreach collection="roles" separator="," item="role">
+            (#{id, jdbcType=VARCHAR}, #{role.id, jdbcType=VARCHAR})
+        </foreach>
+    </insert>
+
+    <!-- 更新最后登录时间 -->
+    <update id="updateLoginTime">
+        UPDATE tb_user SET last_login_time = getdate() where login_name = #{loginName}
+    </update>
+
+    <!-- 锁定解锁 -->
+    <update id="enable">
+        UPDATE tb_user SET update_time  = getdate(), status = #{status, jdbcType=NUMERIC} where id = #{id}
+    </update>
+
+    <!-- 根据id删除用户 -->
+    <delete id="delete">
+        DELETE FROM tb_user WHERE id = #{id}
+    </delete>
+
+    <!-- 批量删除 -->
+    <delete id="deleteBatch">
+        DELETE FROM tb_user WHERE id IN
+        <foreach collection="ids" open="(" close=")" separator=", " item="id">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 删除用户时, 删除用户角色关系 -->
+    <delete id="deleteUserRole">
+        DELETE FROM tb_user_role WHERE user_id = #{id}
+    </delete>
+</mapper>

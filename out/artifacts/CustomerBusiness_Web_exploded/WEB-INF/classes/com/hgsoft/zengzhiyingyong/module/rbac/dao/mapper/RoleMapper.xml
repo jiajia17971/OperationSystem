@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hgsoft.zengzhiyingyong.module.rbac.dao.mapper.RoleMapper">
+    <!-- 用户resultMap -->
+    <resultMap id="roleMap" type="com.hgsoft.zengzhiyingyong.module.rbac.domain.Role">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="is_default" property="status"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <collection property="modules" ofType="com.hgsoft.zengzhiyingyong.module.rbac.domain.Module">
+            <result column="module_id" property="id"/>
+        </collection>
+    </resultMap>
+
+    <!-- role column  -->
+    <sql id="rolePart">
+      r.id,
+      r.name,
+      r.is_default,
+      r.remark,
+      r.create_time,
+      r.update_time
+    </sql>
+
+    <!-- where条件-->
+    <sql id="whereSql">
+        <where>
+            <if test="role.name != null and role.name != ''">
+                AND r.name like '%' + ltrim(rtrim(#{role.name, jdbcType=VARCHAR})) + '%'
+            </if>
+            <if test="role.status != null">
+                AND r.is_default = #{role.status}
+            </if>
+        </where>
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="query" resultMap="roleMap">
+      select
+          top ${size} *
+        from
+        (
+            select
+            row_number() over(order by create_time DESC) as rownumber,
+            <include refid="rolePart"/>
+            from
+            tb_role r
+            <include refid="whereSql"/>
+        ) middle where rownumber &gt; #{skip}
+    </select>
+
+    <!-- 统计总数 -->
+    <select id="count" resultType="long">
+        SELECT
+          count(1)
+        FROM
+          tb_role r
+          <include refid="whereSql"/>
+    </select>
+
+    <!-- 获取所有的角色集 -->
+    <select id="queryAll" resultMap="roleMap">
+        SELECT
+          <include refid="rolePart"/>
+        FROM
+          tb_role r
+        ORDER BY r.create_time DESC
+    </select>
+
+    <!-- 根据id获取角色信息 -->
+    <select id="get" resultMap="roleMap">
+        SELECT
+          <include refid="rolePart"/>,
+          rm.module_id
+        FROM
+          tb_role r LEFT JOIN tb_role_module rm ON r.id = rm.role_id
+        WHERE r.id = #{id}
+    </select>
+
+    <!-- 通过角色名获取角色总数 -->
+    <select id="countByRoleName" resultType="java.lang.Long">
+        SELECT COUNT(1) FROM tb_role WHERE name = ltrim(rtrim(#{role.name, jdbcType=VARCHAR}))
+        <if test="role.id != null and role.id != ''">
+            AND id != #{role.id, jdbcType=VARCHAR}
+        </if>
+    </select>
+
+    <!-- 修改角色 -->
+    <update id="update">
+        UPDATE tb_role SET
+          name = #{role.name, jdbcType=VARCHAR},
+          is_default = #{role.status, jdbcType=NUMERIC},
+          remark = #{role.remark, jdbcType=VARCHAR},
+          update_time = #{role.updateTime, jdbcType=TIMESTAMP}
+        WHERE id = #{role.id, jdbcType=VARCHAR}
+    </update>
+
+    <!-- 新增角色 -->
+    <insert id="insert">
+        INSERT INTO tb_role(id, name, is_default, remark, create_time, update_time)
+        VALUES (
+            #{role.id, jdbcType=VARCHAR},
+            #{role.name, jdbcType=VARCHAR},
+            #{role.status, jdbcType=NUMERIC},
+            #{role.remark, jdbcType=VARCHAR},
+            #{role.createTime, jdbcType=TIMESTAMP},
+            #{role.updateTime, jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+    <!-- 新增角色模块关系 -->
+    <insert id="insertRoleModule">
+        INSERT INTO tb_role_module(role_id, module_id) VALUES
+        <foreach collection="modules" separator="," item="module">
+            (#{id, jdbcType=VARCHAR}, #{module.id, jdbcType=VARCHAR})
+        </foreach>
+    </insert>
+
+    <!-- 根据id删除角色 -->
+    <delete id="delete">
+        DELETE FROM tb_role WHERE id = #{id}
+    </delete>
+
+    <!-- 删除角色时, 删除用户角色关系 -->
+    <delete id="deleteRoleUser">
+        DELETE FROM tb_user_role WHERE role_id = #{id}
+    </delete>
+
+    <!-- 删除角色时, 删除角色模块关系 -->
+    <delete id="deleteRoleModule">
+        DELETE FROM tb_role_module where role_id = #{id}
+    </delete>
+</mapper>

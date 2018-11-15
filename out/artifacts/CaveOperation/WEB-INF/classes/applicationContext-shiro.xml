@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+					http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+
+    <bean id="authController" class="com.hgsoft.zengzhiyingyong.security.realm.AuthControllerImpl">
+        <property name="filterChainDefinitions">
+            <value>
+                /login = anon
+                /logout = anon
+                /index.jsp = anon
+                /common/** = anon
+                /css/** = anon
+                /font/** = anon
+                /images/** = anon
+                /images/code = anon
+                /js/** = anon
+                /WEB-INF/views/error/400.jsp = anon
+                /WEB-INF/views/error/403.jsp = anon
+                /WEB-INF/views/error/404.jsp = anon
+                /WEB-INF/views/error/500.jsp = anon
+                /WEB-INF/views/login.jsp = anon
+            </value>
+        </property>
+    </bean>
+
+    <!-- 定义or角色过滤器 -->
+    <bean id="roleOrFilter" class="com.hgsoft.zengzhiyingyong.security.util.CustomRolesAuthorizationFilter" />
+
+    <!-- Shiro Filter -->
+    <bean id="shiroFilter" class="com.hgsoft.zengzhiyingyong.security.util.MyShiroFilterFactoryBean"
+          depends-on="roleOrFilter">
+        <property name="securityManager" ref="securityManager" />
+        <property name="loginUrl" value="/login" />
+        <property name="successUrl" value="/index" />
+        <property name="unauthorizedUrl" value="/unauthorized" />
+        <property name="filters">
+            <util:map>
+                <entry key="roleOrFilter" value-ref="roleOrFilter"/>
+                <entry key="authc">
+                    <bean class="org.apache.shiro.web.filter.authc.PassThruAuthenticationFilter"/>
+                </entry>
+            </util:map>
+        </property>
+        <property name="filterChainDefinitions" value="#{authController.loadFilterChainDefinitions()}"/>
+    </bean>
+
+    <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+        <property name="realm" ref="permissionsRealm" />
+        <property name="cacheManager" ref="ehCacheManager" />
+    </bean>
+
+    <bean id="ehCacheManager" class="org.apache.shiro.cache.ehcache.EhCacheManager">
+        <property name="cacheManagerConfigFile" value="classpath:ehcache/shiro-ehcache.xml"/>
+    </bean>
+
+    <!-- 认证与授权服务 -->
+    <bean id="permissionsRealm" class="com.hgsoft.zengzhiyingyong.security.realm.PermissionsRealm" />
+
+    <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>
+    <bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator" depends-on="lifecycleBeanPostProcessor">
+        <property name="proxyTargetClass" value="true" />
+    </bean>
+    <bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">
+        <property name="securityManager" ref="securityManager"/>
+    </bean>
+</beans>

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hgsoft.zengzhiyingyong.module.rbac.dao.mapper.ModuleMapper">
+    <resultMap id="moduleMap" type="com.hgsoft.zengzhiyingyong.module.rbac.domain.Module">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="url" property="url"/>
+        <result column="remark" property="remark"/>
+        <result column="status" property="status"/>
+        <result column="sort_no" property="sortNo"/>
+        <result column="levels" property="levels"/>
+        <result column="image_name" property="imageName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <collection property="childModules" ofType="com.hgsoft.zengzhiyingyong.module.rbac.domain.Module">
+            <id column="module_id" property="id"/>
+            <result column="module_name" property="name"/>
+            <result column="module_url" property="url"/>
+        </collection>
+        <collection property="roles" ofType="com.hgsoft.zengzhiyingyong.module.rbac.domain.Role">
+            <id column="role_id" property="id"/>
+            <result column="role_name" property="name"/>
+        </collection>
+    </resultMap>
+
+    <!-- 获取树节点数据 -->
+    <select id="getTreeData" resultMap="moduleMap">
+        SELECT
+          id,
+          name,
+          parent_id
+        FROM
+        tb_module
+        WHERE status = 1 ORDER BY sort_no ASC
+    </select>
+
+    <!-- 获取所有树节点数据 -->
+    <select id="getAllTreeData" resultMap="moduleMap">
+        SELECT
+          id,
+          name,
+          parent_id
+        FROM
+        tb_module
+        ORDER BY sort_no ASC
+    </select>
+
+    <!-- 通过id获取模块信息 -->
+    <select id="get" resultMap="moduleMap">
+        SELECT
+          id,
+          name,
+          url,
+          parent_id,
+          remark,
+          status,
+          sort_no,
+          levels,
+          image_name
+        FROM
+          tb_module
+        WHERE
+        id = #{id}
+    </select>
+
+    <!-- 删除模块 -->
+    <delete id="delete">
+        DELETE FROM tb_module WHERE id = #{id}
+    </delete>
+
+    <!-- 删除模块角色关系 -->
+    <delete id="deleteModuleRole">
+        DELETE FROM tb_role_module WHERE module_id = #{id}
+    </delete>
+
+    <!-- 新增模块 -->
+    <insert id="save">
+        INSERT INTO
+          tb_module(id, name, url, parent_id, remark, status, sort_no, levels, image_name, create_time, update_time)
+        VALUES
+        (#{module.id, jdbcType=VARCHAR}, #{module.name, jdbcType=VARCHAR}, #{module.url, jdbcType=VARCHAR},
+        #{module.parentId, jdbcType=VARCHAR}, #{module.remark, jdbcType=VARCHAR}, #{module.status, jdbcType=NUMERIC},
+        #{module.sortNo, jdbcType=NUMERIC}, #{module.levels, jdbcType=NUMERIC}, #{module.imageName, jdbcType=VARCHAR},
+        #{module.createTime, jdbcType=TIMESTAMP},#{module.updateTime, jdbcType=TIMESTAMP})
+    </insert>
+
+    <!-- 修改模块 -->
+    <update id="update">
+      UPDATE
+        tb_module
+      SET
+        name = #{module.name, jdbcType=VARCHAR},
+        url = #{module.url, jdbcType=VARCHAR},
+        parent_id = #{module.parentId, jdbcType=VARCHAR},
+        remark = #{module.remark, jdbcType=VARCHAR},
+        status = #{module.status, jdbcType=NUMERIC},
+        sort_no = #{module.sortNo, jdbcType=NUMERIC},
+        levels = #{module.levels, jdbcType=NUMERIC},
+        image_name = #{module.imageName, jdbcType=VARCHAR},
+        update_time = #{module.updateTime, jdbcType=TIMESTAMP}
+      WHERE
+        id = #{module.id, jdbcType=VARCHAR}
+    </update>
+
+    <!-- 获取总数 -->
+    <select id="countModuleName" resultType="java.lang.Integer">
+        SELECT
+          count(1)
+        FROM tb_module where name = ltrim(rtrim(#{module.name, jdbcType=VARCHAR}))
+        <if test="module.id != null and module.id != ''">
+          AND id != #{module.id, jdbcType=VARCHAR}
+        </if>
+    </select>
+
+    <!-- 获取个人菜单数据 -->
+    <select id="getMenus" resultMap="moduleMap">
+        SELECT
+            MIDDLE1.ID,
+            MIDDLE1.NAME,
+            MIDDLE1.IMAGE_NAME,
+            MIDDLE2.ID as module_id,
+            MIDDLE2.NAME AS module_name,
+            MIDDLE2.URL AS module_url
+        FROM
+        (
+            SELECT
+              M.ID, M.NAME, M.IMAGE_NAME, M.SORT_NO
+            FROM
+            TB_USER U
+            JOIN TB_USER_ROLE UR ON U.ID=#{id} AND U.ID = UR.USER_ID
+            JOIN TB_ROLE_MODULE RM ON UR.ROLE_ID = RM.ROLE_ID
+            JOIN TB_MODULE M ON RM.MODULE_ID = M.ID AND M.STATUS = 1 AND LEN(M.PARENT_ID) = 0
+        ) MIDDLE1 LEFT JOIN
+        (
+            SELECT
+              M.ID, M.NAME, M.PARENT_ID, M.SORT_NO, M.URL
+            FROM
+              TB_USER U
+            JOIN TB_USER_ROLE UR ON U.ID=#{id} AND U.ID = UR.USER_ID
+            JOIN TB_ROLE_MODULE RM ON UR.ROLE_ID = RM.ROLE_ID
+            JOIN TB_MODULE M ON RM.MODULE_ID = M.ID AND M.STATUS = 1 AND LEN(M.PARENT_ID) != 0
+        ) MIDDLE2 ON MIDDLE1.ID = MIDDLE2.PARENT_ID ORDER BY MIDDLE1.SORT_NO, MIDDLE2.SORT_NO
+    </select>
+
+    <!-- 获取指定url可以被哪些角色集访问 -->
+    <select id="getUrlRoles" resultMap="moduleMap">
+        SELECT
+          m.id,
+          m.url,
+          rm.role_id,
+          r.name as role_name
+        FROM
+        tb_module m
+        left join tb_role_module rm on m.id = rm.module_id
+        left join tb_role r on rm.role_id = r.id
+        where len(ltrim(rtrim(m.url))) != 0 and m.status = 1
+    </select>
+</mapper>

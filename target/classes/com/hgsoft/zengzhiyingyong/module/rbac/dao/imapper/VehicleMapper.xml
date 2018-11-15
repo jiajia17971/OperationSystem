@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hgsoft.zengzhiyingyong.module.rbac.dao.imapper.VehicleMapper">
+    <!-- 用户resultMap -->
+    <resultMap id="vehicleMap" type="com.hgsoft.zengzhiyingyong.module.rbac.domain.Vehicle">
+        <id column="id" property="id"/>
+        <result column="vehiclePlate" property="vehiclePlate"/>
+        <result column="vehiclePlateColor" property="vehicleColor"/>
+        <result column="faceCardNum" property="faceCardNum"/>
+        <result column="lastModifyTime" property="lastModifyTime"/>
+        <result column="state" property="state"/>
+
+
+    </resultMap>
+
+    <!-- vehicle column  -->
+    <select id="findByFaceCardNum" resultMap="vehicleMap">
+        select id,faceCardNum,vehiclePlate as vehiclePlate,vehiclePlateColor,lastModifyTime,state from tb_Card with (nolock) <include refid="whereid"></include>
+    </select>
+
+    <select id="findByCCBCardNum" resultMap="vehicleMap">
+        select id,faceCardNum,vehPlate as vehiclePlate,vehiclePlateColor,lastModifyTime,state from tb_Card_CCB with (nolock) <include refid="whereid"></include>
+    </select>
+
+    <sql id="whereid">
+        <where>
+           AND state=2 and lastModifyTime>GETDATE()-30
+                AND faceCardNum = #{faceCardNum}
+        </where>
+    </sql>
+
+    <update id="updateCard" >
+        update tb_Card set lastModifyTime = getDate()-30 where faceCardNum = #{vehicle.faceCardNum}
+    </update>
+
+    <update id="updateCCBCard" >
+        update tb_Card_CCB set lastModifyTime = getDate()-30 where faceCardNum = #{vehicle.faceCardNum}
+    </update>
+
+   <select id="findCard" resultMap="vehicleMap">
+       select faceCardNum from tb_Card
+       <include refid="wheresql1"/>
+       union
+       select faceCardNum from tb_Card_CCB
+       <include refid="wheresql2"/>
+   </select>
+
+    <sql id="wheresql1">
+        <where>
+            <if test="faceCardNum != ''">
+                AND faceCardNum = #{faceCardNum}
+            </if>
+            <if test="vehiclePlate != '' and  vehicleColor !=''">
+                AND vehiclePlate = #{vehiclePlate} AND  vehiclePlateColor = #{vehicleColor}
+            </if>
+
+        </where>
+    </sql>
+    <sql id="wheresql2">
+        <where>
+            <if test="faceCardNum != ''">
+                AND faceCardNum = #{faceCardNum}
+            </if>
+            <if test="vehiclePlate != '' and  vehicleColor !=''">
+                AND vehPlate = #{vehiclePlate} AND  vehiclePlateColor = #{vehicleColor}
+            </if>
+
+        </where>
+    </sql>
+
+</mapper>

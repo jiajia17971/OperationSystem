@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hgsoft.zengzhiyingyong.module.rbac.dao.umapper.TransferMapper">
+
+    <resultMap id="transferMap" type="com.hgsoft.zengzhiyingyong.module.rbac.domain.TransferEntity">
+        <id column="id" property="id"/>
+        <result column="cardno" property="cardNo"/>
+        <result column="listNo" property="listNo"/>
+        <result column="accType" property="accType"/>
+        <result column="transferAmt" property="transferAmt"/>
+        <result column="createTime" property="createTime"/>
+        <result column="transferTime" property="transferTime"/>
+        <result column="transferStatus" property="transferStatus"/>
+        <result column="lastUpdtime" property="lastUpdtime"/>
+    </resultMap>
+
+    <select id="query" resultMap="transferMap">
+        select cardNo,
+        listNo,
+        accType,
+        transferAmt*0.01 as transferAmt,
+        createTime
+        from [RechargePlatform].[dbo].[tb_transfer] with (nolock)
+        where cardno = #{faceCardNum} and CONVERT(VARCHAR(10),createTime,120)>= #{startTime} and CONVERT (VARCHAR (10),createTime,120) &lt;= #{endTime}
+    </select>
+
+
+
+</mapper>

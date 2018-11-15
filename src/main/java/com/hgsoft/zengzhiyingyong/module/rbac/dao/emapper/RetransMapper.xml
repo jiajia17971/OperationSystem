@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hgsoft.zengzhiyingyong.module.rbac.dao.emapper.RetransMapper">
+
+    <!-- 重发项resultMap -->
+    <resultMap id="resMap" type="com.hgsoft.zengzhiyingyong.module.rbac.domain.ReloadEntity">
+        <id column="ID" property="id"/>
+        <result column="Voucherid" property="voucherid"/>
+        <result column="OrgID" property="orgid"/>
+        <result column="BatchNo" property="batchNo"/>
+        <result column="EExtiNum" property="EExtiNum"/>
+        <result column="EExtiMoney" property="EExtiMoney"/>
+        <result column="Status" property="status"/>
+        <result column="Remarks" property="remark"/>
+        <result column="CreateTime" property="createTime"/>
+    </resultMap>
+    <!-- sql  -->
+    <delete id="delete_sum" >
+      delete from [ETCTolling].[dbo].[CL_EexitSum] where OrgID = #{load.orgid} and BatchNo = #{load.batchNo}
+    </delete>
+    <delete id="delete_comfirm" >
+      delete from [ETCTolling].[dbo].[CL_Province_File_Confirm] where OrgCode = #{load.orgid} and BatchNo = #{load.batchNo}
+    </delete>
+    <update id="update_Recv" >
+       update [ETCTolling].[dbo].[CL_Eexit_PostCleared_Recv] set flag = 0,domain3=#{load.batchNo} where OrgCode = #{load.orgid} and flag = 2 and ProvinceBatchNo = #{load.batchNo}
+    </update>
+    <select id="searchSummary" resultMap="resMap">
+        select EExitCnt as EExtiNum,EExitETCMoneySum*0.01 as EExtiMoney from [ETCTolling].[dbo].[CL_EexitSum] where State = 0 and OrgID = #{orgid} and batchno = #{batchno}
+    </select>
+
+</mapper>

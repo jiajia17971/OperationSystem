@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hgsoft.zengzhiyingyong.module.rbac.dao.mapper.ReloadMapper">
+    <!-- 重发项resultMap -->
+    <resultMap id="reloadMap" type="com.hgsoft.zengzhiyingyong.module.rbac.domain.ReloadEntity">
+        <id column="ID" property="id"/>
+        <result column="Voucherid" property="voucherid"/>
+        <result column="OrgID" property="orgid"/>
+        <result column="BatchNo" property="batchNo"/>
+        <result column="EExtiNum" property="EExtiNum"/>
+        <result column="EExtiMoney" property="EExtiMoney"/>
+        <result column="Status" property="status"/>
+        <result column="Remarks" property="remark"/>
+        <result column="CreateTime" property="createTime"/>
+    </resultMap>
+
+    <!-- reload column  -->
+    <select id="query" resultMap="reloadMap">
+        select
+        top ${size} *
+        from(
+        SELECT
+        row_number() over(order by c.id DESC) as rownumber
+        ,c.id
+        ,c.OrgID as OrgID
+        ,c.BatchNo as BatchNo
+        ,c.EExtiNum as EExtiNum
+        ,CAST(c.EExtiMoney*0.01 as decimal(10,2)) as EExtiMoney
+        ,c.Status as Status
+        ,c.Remarks as Remarks
+        ,c.CreateTime as CreateTime
+        ,c.voucherid as voucherid
+        FROM tb_dome c LEFT JOIN tb_Voucher v on c.voucherid = v.id
+        <include refid="wheresql"></include>
+        )middle  where rownumber > #{skip}
+    </select>
+
+    <!-- where条件-->
+    <sql id="wheresql">
+        <where>
+
+            <if test="voucherid != null and voucherid != ''">
+                AND c.voucherid = #{voucherid, jdbcType=VARCHAR}
+            </if>
+
+
+        </where>
+    </sql>
+
+    <!-- 统计总数 -->
+    <select id="count" resultType="long">
+        SELECT
+          count(1)
+        FROM
+        tb_dome c
+        <include refid="wheresql"></include>
+    </select>
+
+    <!-- 根据id获取卡信息 -->
+    <select id="get" resultMap="reloadMap">
+        SELECT
+          *
+
+        FROM
+          tb_dome
+        WHERE id = #{id}
+    </select>
+
+
+    <!-- 新增重发项 -->
+    <insert id="save" useGeneratedKeys="true" keyProperty="reload.id">
+        INSERT INTO tb_dome(OrgID, BatchNo, Status,EExtiNum,EExtiMoney, Remarks, CreateTime,Voucherid)
+        VALUES (#{reload.orgid, jdbcType=VARCHAR}, #{reload.batchNo, jdbcType=VARCHAR},
+        #{reload.status, jdbcType=NUMERIC},#{reload.EExtiNum, jdbcType=NUMERIC},#{reload.EExtiMoney, jdbcType=NUMERIC}, #{reload.remark, jdbcType=VARCHAR},
+        #{reload.createTime, jdbcType=TIMESTAMP}, #{reload.voucherid, jdbcType=NUMERIC})
+    </insert>
+
+    <!-- 修改重发项 -->
+    <update id="update" >
+        update tb_dome set OrgID = #{reload.orgid, jdbcType=VARCHAR}, BatchNo=#{reload.batchNo, jdbcType=VARCHAR}, Status = #{reload.status, jdbcType=NUMERIC},EExtiNum = #{reload.EExtiNum, jdbcType=NUMERIC},EExtiMoney = #{reload.EExtiMoney, jdbcType=NUMERIC}, Remarks = #{reload.remark, jdbcType=VARCHAR}, CreateTime = #{reload.createTime, jdbcType=TIMESTAMP},Voucherid = #{reload.voucherid, jdbcType=NUMERIC}
+         where id=#{reload.id, jdbcType=NUMERIC}
+    </update>
+    <!-- 删除重发项 -->
+    <delete id="delete">
+        DELETE FROM tb_dome WHERE id = #{id}
+    </delete>
+
+
+
+</mapper>

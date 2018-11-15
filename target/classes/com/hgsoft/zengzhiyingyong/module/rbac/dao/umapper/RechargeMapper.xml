@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hgsoft.zengzhiyingyong.module.rbac.dao.umapper.RechargeMapper">
+    <resultMap id="rechargeMap" type="com.hgsoft.zengzhiyingyong.module.rbac.domain.RechargeEntity">
+        <id column="id" property="id"/>
+        <result column="orgid" property="orgid"/>
+        <result column="listno" property="listno"/>
+        <result column="etcAccountNum" property="etcAccountNum"/>
+        <result column="tradeAmount" property="tradeAmount"/>
+        <result column="tradeType" property="tradeType"/>
+        <result column="accountType" property="accountType"/>
+        <result column="accountName" property="accountName"/>
+        <result column="tradeTime" property="tradeTime"/>
+        <result column="businessTime" property="businessTime"/>
+        <result column="voucherid" property="voucherid"/>
+    </resultMap>
+
+    <!-- 查询账户充圈信息 -->
+    <select id="query" resultMap="rechargeMap">
+        select orgid,listno,etcAccountNum,tradeAmount*0.01 as tradeAmount,tradeType,accountType,accountName,tradeTime,voucherid from [RechargePlatform].[dbo].[TB_RechargeList] where listno not in (select listNo from [RechargePlatform].[dbo].[tb_sub_account_rechargebill]  ) and etcAccountNum like '%'+#{faceCardNum}+'%'  and accountType=0 and tradeTime BETWEEN #{startTime} and #{endTime} and voucherid is null
+        union all
+        select orgid,listno,etcAccountNum,tradeAmount*0.01 as tradeAmount,tradeType,accountType,accountName,tradeTime,voucherid from [RechargePlatform].[dbo].[TB_RechargeList] where listno not in (select listNo from [RechargePlatform].[dbo].[tb_account_rechargebill]  ) and etcAccountNum like '%'+#{faceCardNum}+'%' and accountType=1 and tradeTime BETWEEN #{startTime} and #{endTime} and voucherid is null
+    </select>
+
+    <!-- 统计总数 -->
+    <select id="count" resultType="long">
+        select COUNT(1) from [RechargePlatform].[dbo].[TB_RechargeList] where listNo not in (select listNo from [RechargePlatform].[dbo].[tb_sub_account_rechargebill] ) and etcAccountNum like '%'+#{faceCardNum}+'%' and tradeTime BETWEEN #{startTime} and #{endTime}
+    </select>
+
+    <update id="updateRechargeList">
+        update [RechargePlatform].[dbo].[TB_RechargeList] set voucherid = #{card.voucherid} where etcAccountNum like '%'+#{faceCardNum}+'%' and listno = #{card.flowHead}
+    </update>
+
+</mapper>

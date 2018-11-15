@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop" xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc" xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="
+            http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		    http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+		    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		    http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-4.0.xsd
+		    http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd"
+       default-lazy-init="true">
+
+    <!-- Spring公共配置, 包括变量引入/事务声明/等等 -->
+    <import resource="applicationContext-platform.xml"/>
+
+    <!-- 使用annotation自动注册bean, 并保证@Required/@Autowired的属性被注入 -->
+    <context:component-scan base-package="com.hgsoft.zengzhiyingyong.module">
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+        <context:exclude-filter type="annotation" expression="org.springframework.web.bind.annotation.ControllerAdvice"/>
+    </context:component-scan>
+
+    <!-- 自定义bean -->
+    <bean class="com.hgsoft.zengzhiyingyong.common.context.ApplicationContextHolder" lazy-init="false"/>
+    <bean class="com.hgsoft.zengzhiyingyong.common.context.SystemContextHolder" lazy-init="false"/>
+
+
+    <!-- 属性文件 -->
+    <context:property-placeholder ignore-resource-not-found="true"
+                                  location="classpath:/application.properties"/>
+
+    <!-- 数据源配置, 使用应用内的DBCP数据库连接池 -->
+    <bean id="dataSource" class="org.apache.tomcat.jdbc.pool.DataSource" destroy-method="close">
+        <property name="driverClassName"   value="${jdbc.driver}"/>
+        <property name="url"               value="${jdbc.url}"/>
+        <property name="username"          value="${jdbc.username}"/>
+        <property name="password"          value="${jdbc.password}"/>
+        <property name="maxActive"         value="${jdbc.pool.maxActive}"/>
+        <property name="maxIdle"           value="${jdbc.pool.maxIdle}"/>
+        <property name="minIdle"           value="${jdbc.pool.minIdle}"/>
+        <property name="defaultAutoCommit" value="false"/>
+        <!-- 连接Idle10分钟后超时，每1分钟检查一次 -->
+        <property name="timeBetweenEvictionRunsMillis" value="60000"/>
+        <property name="minEvictableIdleTimeMillis" value="600000"/>
+        <!-- 验证连接有效性语句 -->
+        <property name="validationQuery" value="select 1"/>
+        <property name="validationInterval" value="60000"/>
+
+        <!-- 是否测试空闲的数据库连接 -->
+        <property name="testWhileIdle" value="true" />
+        <!-- 从连接池获取连接时，测试连接是否可用。-->
+        <property name="testOnBorrow" value="true" />
+        <!-- 将连接还给连接池时，测试连接是否可用。-->
+        <property name="testOnReturn" value="true" />
+    </bean>
+
+    <!-- 数据源配置, 使用应用内的DBCP数据库连接池 -->
+    <bean id="dataSource2" class="org.apache.tomcat.jdbc.pool.DataSource" destroy-method="close">
+        <property name="driverClassName"   value="${i.driver}"/>
+        <property name="url"               value="${i.url}"/>
+        <property name="username"          value="${i.username}"/>
+        <property name="password"          value="${i.password}"/>
+        <property name="defaultAutoCommit" value="false"/>
+        <!-- 连接Idle10分钟后超时，每1分钟检查一次 -->
+        <property name="timeBetweenEvictionRunsMillis" value="60000"/>
+        <property name="minEvictableIdleTimeMillis" value="600000"/>
+        <!-- 验证连接有效性语句 -->
+        <property name="validationQuery" value="select 1"/>
+        <property name="validationInterval" value="60000"/>
+
+        <!-- 是否测试空闲的数据库连接 -->
+        <property name="testWhileIdle" value="true" />
+        <!-- 从连接池获取连接时，测试连接是否可用。-->
+        <property name="testOnBorrow" value="true" />
+        <!-- 将连接还给连接池时，测试连接是否可用。-->
+        <property name="testOnReturn" value="true" />
+    </bean>
+
+    <!-- 数据源配置, 使用应用内的DBCP数据库连接池 -->
+    <bean id="dataSource3" class="org.apache.tomcat.jdbc.pool.DataSource" destroy-method="close">
+        <property name="driverClassName"   value="${u.driver}"/>
+        <property name="url"               value="${u.url}"/>
+        <property name="username"          value="${u.username}"/>
+        <property name="password"          value="${u.password}"/>
+        <property name="defaultAutoCommit" value="false"/>
+        <!-- 连接Idle10分钟后超时，每1分钟检查一次 -->
+        <property name="timeBetweenEvictionRunsMillis" value="60000"/>
+        <property name="minEvictableIdleTimeMillis" value="600000"/>
+        <!-- 验证连接有效性语句 -->
+        <property name="validationQuery" value="select 1"/>
+        <property name="validationInterval" value="60000"/>
+
+        <!-- 是否测试空闲的数据库连接 -->
+        <property name="testWhileIdle" value="true" />
+        <!-- 从连接池获取连接时，测试连接是否可用。-->
+        <property name="testOnBorrow" value="true" />
+        <!-- 将连接还给连接池时，测试连接是否可用。-->
+        <property name="testOnReturn" value="true" />
+    </bean>
+
+    <!-- 数据源配置, 使用应用内的DBCP数据库连接池 -->
+    <bean id="dataSource4" class="org.apache.tomcat.jdbc.pool.DataSource" destroy-method="close">
+        <property name="driverClassName"   value="${e.driver}"/>
+        <property name="url"               value="${e.url}"/>
+        <property name="username"          value="${e.username}"/>
+        <property name="password"          value="${e.password}"/>
+        <property name="defaultAutoCommit" value="false"/>
+        <!-- 连接Idle10分钟后超时，每1分钟检查一次 -->
+        <property name="timeBetweenEvictionRunsMillis" value="60000"/>
+        <property name="minEvictableIdleTimeMillis" value="600000"/>
+        <!-- 验证连接有效性语句 -->
+        <property name="validationQuery" value="select 1"/>
+        <property name="validationInterval" value="60000"/>
+
+        <!-- 是否测试空闲的数据库连接 -->
+        <property name="testWhileIdle" value="true" />
+        <!-- 从连接池获取连接时，测试连接是否可用。-->
+        <property name="testOnBorrow" value="true" />
+        <!-- 将连接还给连接池时，测试连接是否可用。-->
+        <property name="testOnReturn" value="true" />
+    </bean>
+
+
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="configLocation" value="classpath:/mybatis/config.xml"/>
+    </bean>
+
+    <bean id="sqlSessionFactory2" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource2"/>
+        <property name="configLocation" value="classpath:/mybatis/config.xml"/>
+    </bean>
+    <bean id="sqlSessionFactory3" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource3"/>
+        <property name="configLocation" value="classpath:/mybatis/config.xml"/>
+    </bean>
+    <bean id="sqlSessionFactory4" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource4"/>
+        <property name="configLocation" value="classpath:/mybatis/config.xml"/>
+    </bean>
+
+
+    <bean id="scannerBase" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+        <property name="basePackage" value="com.hgsoft.zengzhiyingyong.module.rbac.dao.mapper"/>
+        <property name="markerInterface" value="com.hgsoft.zengzhiyingyong.common.mapper.IBaseMapper"/>
+    </bean>
+
+    <bean id="scannerData"  class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory2"/>
+        <property name="basePackage" value="com.hgsoft.zengzhiyingyong.module.rbac.dao.imapper"/>
+        <property name="markerInterface" value="com.hgsoft.zengzhiyingyong.common.mapper.IDataMapper"/>
+        <property name="annotationClass" value="org.springframework.stereotype.Repository"/>
+    </bean>
+    <bean id="scannerSour"  class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory3"/>
+        <property name="basePackage" value="com.hgsoft.zengzhiyingyong.module.rbac.dao.umapper"/>
+        <property name="markerInterface" value="com.hgsoft.zengzhiyingyong.common.mapper.IRechargeMapper"/>
+        <property name="annotationClass" value="org.springframework.stereotype.Repository"/>
+    </bean>
+    <bean id="scannerHand"  class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory4"/>
+        <property name="basePackage" value="com.hgsoft.zengzhiyingyong.module.rbac.dao.emapper"/>
+        <property name="markerInterface" value="com.hgsoft.zengzhiyingyong.common.mapper.IReloadMapper"/>
+        <property name="annotationClass" value="org.springframework.stereotype.Repository"/>
+    </bean>
+
+    <!-- 事务管理器配置, JDBC事务配置 -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+
+    <bean id="otherTransactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource2" />
+    </bean>
+    <bean id="thirdTransactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource3" />
+    </bean>
+    <bean id="fourTransactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource4" />
+    </bean>
+
+
+    <!-- 使用annotation定义事务 -->
+    <tx:annotation-driven transaction-manager="transactionManager" proxy-target-class="true" />
+
+    <tx:annotation-driven transaction-manager="otherTransactionManager" proxy-target-class="true" />
+
+    <tx:annotation-driven transaction-manager="thirdTransactionManager" proxy-target-class="true" />
+
+    <tx:annotation-driven transaction-manager="fourTransactionManager" proxy-target-class="true" />
+
+    <!-- 定义aspectj -->
+    <aop:aspectj-autoproxy proxy-target-class="true"/>
+
+    <bean id="viewResolver" class="org.springframework.web.servlet.view.freemarker.FreeMarkerViewResolver">
+
+        <property name="allowSessionOverride" value="true" />
+        <property name="allowRequestOverride" value="true" />
+        <property name="cache" value="true"/>
+        <property name="prefix" value="/"/>
+        <property name="suffix" value=".ftl"/>
+        <property name="contentType" value="text/html;charset=UTF-8"></property>
+        <property name="requestContextAttribute" value="request" />
+        <property name="exposeSpringMacroHelpers" value="true" />
+        <property name="exposeRequestAttributes" value="true" />
+        <property name="exposeSessionAttributes" value="true" />
+
+    </bean>
+
+    <bean id="freemarkerConfig" class="org.springframework.web.servlet.view.freemarker.FreeMarkerConfigurer">
+        <property name="templateLoaderPath">
+            <value>/</value>
+        </property>
+        <property name="freemarkerSettings">
+            <props>
+                <prop key="template_update_delay">0</prop>
+                <prop key="default_encoding">UTF-8</prop>
+                <prop key="number_format">0.##########</prop>
+                <prop key="datetime_format">yyyy-MM-dd HH:mm:ss</prop>
+                <prop key="classic_compatible">true</prop>
+                <prop key="template_exception_handler">ignore</prop>
+            </props>
+        </property>
+    </bean>
+
+</beans>

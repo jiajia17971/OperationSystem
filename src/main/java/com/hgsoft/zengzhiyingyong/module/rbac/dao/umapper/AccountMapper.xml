@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hgsoft.zengzhiyingyong.module.rbac.dao.umapper.AccountMapper">
+
+
+    <!-- 创建虚拟订单  -->
+    <insert id="createOrder">
+        INSERT INTO [RechargePlatform].[dbo].[tb_sub_account_rechargebill] ([billno] ,[billname],[billprice] ,[acctype] ,[createtime] ,[orgid]  ,[updatetime] ,[tradestatus] ,[incardno]
+				   ,[isrevoke] ,[reconciliation] ,[listno] ,[paytype] ,[attr1] ,[attr3] ,[attr4] ,[remark])
+				VALUES
+				   ('KKCZ081508'+ cast(cast(ceiling(rand() * 10000000000) as decimal(18,0)) as varchar(10)),'开库调账',#{card.optAmount, jdbcType=NUMERIC}*100 ,#{card.accType, jdbcType=NUMERIC} ,getDate() ,'000' ,getDate(),1,#{card.faceCardNum, jdbcType=VARCHAR},0 ,0 ,#{card.flowHead, jdbcType= VARCHAR},5,0 ,#{card.optAmount, jdbcType=NUMERIC},0,#{card.remark, jdbcType=VARCHAR});
+    </insert>
+    <!--修改虚拟账户余额-->
+    <insert id="updateAccount">
+        update [RechargePlatform].[dbo].[tb_sub_account] set balance = balance + #{card.optAmount, jdbcType=NUMERIC}*100 ,remark = isnull(remark,'')+'开库调账:'+CONVERT(nvarchar(10),#{card.optAmount, jdbcType=VARCHAR}*100)+',' ,lastupdtime = getDate()  ,updoperator = #{card.operator, jdbcType=VARCHAR} where cardno = #{card.faceCardNum, jdbcType=VARCHAR}
+    </insert>
+    <!--插入日志记录-->
+    <insert id="insertLog" >
+        INSERT INTO [RechargePlatform].[dbo].[tb_log]([acctype] ,[businesstype],[rfno],[listno],[prebalance],[amt],[nextbalance] ,[detail],[businesstime],[remark],[operator] ,[handletime]) VALUES
+		(#{card.accType, jdbcType=VARCHAR} ,13,#{card.faceCardNum, jdbcType=VARCHAR} ,#{card.flowHead, jdbcType=VARCHAR},#{card.balance, jdbcType=NUMERIC} ,#{card.optAmount, jdbcType=NUMERIC}*100 ,#{card.balance, jdbcType=VARCHAR}+#{card.optAmount, jdbcType=NUMERIC}*100 ,'开库调账',getDate() ,#{card.remark, jdbcType=VARCHAR},#{card.operator, jdbcType=VARCHAR},getDate())
+    </insert>
+    <!--插入日志记录2-->
+    <insert id="insertRechargeLog" >
+        INSERT INTO [RechargePlatform].[dbo].[tb_log]([acctype] ,[businesstype],[rfno],[listno],[prebalance],[amt],[nextbalance] ,[detail],[businesstime],[remark],[operator] ,[handletime]) VALUES
+		(#{card.accType, jdbcType=VARCHAR} ,13,#{card.faceCardNum, jdbcType=VARCHAR} ,#{card.listNo, jdbcType=VARCHAR},#{card.balance, jdbcType=NUMERIC} ,#{card.optAmount, jdbcType=NUMERIC}*100 ,#{card.balance, jdbcType=VARCHAR}+#{card.optAmount, jdbcType=NUMERIC}*100 ,'开库调账',getDate() ,#{card.remark, jdbcType=VARCHAR},#{card.operator, jdbcType=VARCHAR},getDate())
+    </insert>
+    <!--插入充值记录-->
+    <insert id="insertRecharge" >
+        INSERT INTO [RechargePlatform].[dbo].[tb_sub_account_rechargebill_abnormal]([billno] ,[billname],[billprice],[acctype],[detail],[createTime],[tradeTime] ,[listno],[orgid],[paytype],[isrevoke],[reconciliation],[incardno],[tradestatus],[mac],[attr3],[vouchercardid],[vtype]) VALUES
+        ('KKCZ081508'+ cast(cast(ceiling(rand() * 10000000000) as decimal(18,0)) as varchar(10)),'开库充值' ,#{card.optAmount, jdbcType=NUMERIC}*100,#{card.accType, jdbcType=NUMERIC} ,'开库充值金额['+ CONVERT(VARCHAR(10),#{card.optAmount, jdbcType=NUMERIC}*100 )  +']分',getDate() ,#{card.createTime, jdbcType=TIMESTAMP} ,'00020150822'+ cast(cast(ceiling(rand() * 1000000000) as decimal(18,0)) as varchar(10)),'000',1,0,0,#{card.faceCardNum, jdbcType=VARCHAR},1,0,#{card.optAmount, jdbcType=NUMERIC}*100,#{card.id, jdbcType=VARCHAR},#{voucher.type, jdbcType=NUMERIC})
+    </insert>
+     <!--插入上传记录-->
+    <insert id="inserUploadRecord" >
+        INSERT INTO [RechargePlatform].[dbo].[tb_rechargebill_upload]([accType],[businessType],[cardNo],[billPrice],[centerId],[listNo],[json],[fileName],[createTime],[responseTime],[repeatCount],[statusCode],[status],[fileCode],[responseJson]) VALUES
+        (2,1,#{upload.faceCardNum,jdbcType=VARCHAR},#{upload.optAmount, jdbcType=NUMERIC},#{upload.centerId, jdbcType=VARCHAR},#{upload.listNo, jdbcType=VARCHAR},#{upload.json, jdbcType=VARCHAR},#{upload.fileName, jdbcType=VARCHAR},getDate(),NULL ,1,704,0,#{upload.fileCode, jdbcType=VARCHAR},NULL)
+    </insert>
+
+
+
+
+</mapper>

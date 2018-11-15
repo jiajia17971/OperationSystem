@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hgsoft.zengzhiyingyong.module.rbac.dao.mapper.CardMapper">
+    <!-- 用户resultMap -->
+    <resultMap id="cardMap" type="com.hgsoft.zengzhiyingyong.module.rbac.domain.Card">
+        <id column="id" property="id"/>
+        <result column="type" property="type"/>
+        <result column="faceCardNum" property="faceCardNum"/>
+        <result column="optAmount" property="optAmount"/>
+        <result column="status" property="status"/>
+        <result column="remark" property="remark"/>
+        <result column="voucherid" property="voucherid"/>
+        <result column="flowHead" property="flowHead"/>
+    </resultMap>
+
+    <!-- user column  -->
+    <select id="query" resultMap="cardMap">
+        select
+        top ${size} *
+        from(
+        SELECT
+        row_number() over(order by c.id DESC) as rownumber
+        ,c.id
+        ,c.faceCardNum as faceCardNum
+        ,c.optAmount*0.01 as optAmount
+        ,c.status as status
+        ,c.remark as remark
+        ,v.voucherid as voucherid,
+        c.flowHead
+        FROM tb_CardItem c LEFT JOIN tb_Voucher v on c.voucherid = v.id
+        <include refid="wheresql"></include>
+        )middle  where rownumber > #{skip}
+    </select>
+
+    <!-- where条件-->
+    <sql id="wheresql">
+        <where>
+
+            <if test="voucherid != null and voucherid != ''">
+                AND c.voucherid = #{voucherid, jdbcType=VARCHAR}
+            </if>
+            <if test="faceCardNum != null and faceCardNum != ''">
+                AND c.faceCardNum = #{faceCardNum, jdbcType=VARCHAR}
+            </if>
+
+        </where>
+    </sql>
+
+    <!-- 统计总数 -->
+    <select id="count" resultType="long">
+        SELECT
+          count(1)
+        FROM
+        tb_CardItem c LEFT  JOIN  tb_Voucher v on c.voucherid = v.id
+        <include refid="wheresql"></include>
+    </select>
+
+    <!-- 根据id获取卡信息 -->
+    <select id="get" resultMap="cardMap">
+        SELECT
+          id,
+          faceCardNum,
+          optAmount*0.01 as optAmount,
+          status,
+          remark,
+          voucherid,
+          flowHead
+        FROM
+          tb_CardItem
+        WHERE id = #{id}
+    </select>
+    <!-- 根据id获取卡信息 -->
+    <select id="getByCardNo" resultMap="cardMap">
+        SELECT
+        top 1
+          id,
+          faceCardNum,
+          optAmount*0.01 as optAmount,
+          status,
+          remark,
+          voucherid,
+          flowHead
+        FROM
+          tb_CardItem
+        WHERE faceCardNum = #{faceCardNum}
+    </select>
+    <!-- 根据卡信息查询开库单 -->
+    <select id="getVoucherByCardNo" resultMap="cardMap">
+        SELECT
+          voucherid
+        FROM
+          tb_CardItem
+        WHERE faceCardNum = #{faceCardNum}
+    </select>
+
+
+    <!-- 新增卡片 -->
+    <insert id="save" useGeneratedKeys="true" keyProperty="card.id">
+        INSERT INTO tb_CardItem(faceCardNum, optAmount, status, remark, createTime, lastModifyTime,voucherid,flowHead)
+        VALUES (#{card.faceCardNum, jdbcType=VARCHAR}, #{card.optAmount, jdbcType=VARCHAR}*100,
+        #{card.status, jdbcType=NUMERIC}, #{card.remark, jdbcType=VARCHAR},
+        #{card.createTime, jdbcType=TIMESTAMP}, #{card.createTime, jdbcType=TIMESTAMP}, #{card.voucherid, jdbcType=NUMERIC},#{card.flowHead, jdbcType=VARCHAR})
+    </insert>
+    
+    <update id="update">
+        update tb_CardItem set faceCardNum = #{card.faceCardNum, jdbcType=VARCHAR},optAmount= #{card.optAmount, jdbcType=NUMERIC}*100,status = #{card.status, jdbcType=NUMERIC},flowHead = #{card.flowHead, jdbcType=VARCHAR},remark = #{card.remark, jdbcType=VARCHAR},lastModifyTime = getDate() where id = #{card.id, jdbcType=NUMERIC}
+    </update>
+    
+    <!-- 删除卡片 -->
+    <delete id="delete">
+        DELETE FROM tb_CardItem WHERE id = #{id}
+    </delete>
+
+    <select id="queryByVoucher" resultMap="cardMap">
+        select * from tb_CardItem where id = #{id,jdbcType=NUMERIC}
+    </select>
+
+
+</mapper>

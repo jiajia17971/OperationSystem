@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hgsoft.zengzhiyingyong.module.rbac.dao.mapper.BusinessMapper">
+    <!-- 用户resultMap -->
+    <resultMap id="businessMap" type="com.hgsoft.zengzhiyingyong.module.rbac.domain.Business">
+        <id column="id" property="id"/>
+        <result column="businessType" property="businessType"/>
+        <result column="optTime" property="optTime"/>
+        <result column="operator" property="operator"/>
+        <result column="source" property="source"/>
+    </resultMap>
+
+    <!-- user column  -->
+    <select id="query" resultMap="businessMap">
+        select
+        top ${size} *
+        from(
+
+        SELECT
+        row_number() over(order by b.id DESC) as rownumber
+        ,b.id
+        ,[businessType]
+        ,[optTime]
+        ,u.user_name[operator]
+        ,[source]
+        FROM tb_business b left JOIN tb_User u on u.id = b.operator
+        <include refid="wheresql"></include>
+        )middle  where rownumber > #{skip}
+
+    </select>
+
+    <!-- where条件-->
+    <sql id="wheresql">
+        <where>
+
+            <if test="business.operator != null and business.operator != ''">
+                AND b.operator = #{business.operator, jdbcType=VARCHAR}
+            </if>
+            <if test="start != null and start != ''">
+                AND b.optTime &gt;= #{start, jdbcType=VARCHAR}
+            </if>
+            <if test="end != null and end != ''">
+                AND b.optTime  &lt;= #{end, jdbcType=VARCHAR}
+            </if>
+            <if test="business.businessType != 9">
+                AND b.businessType = #{business.businessType, jdbcType=VARCHAR}
+            </if>
+            <if test="business.source != null and business.source != ''">
+                AND b.source = #{business.source, jdbcType=VARCHAR}
+            </if>
+        </where>
+    </sql>
+
+    <!-- 统计总数 -->
+    <select id="count" resultType="long">
+        SELECT
+          count(1)
+        FROM
+        tb_business b
+        <include refid="wheresql"></include>
+    </select>
+
+    <!-- 根据id获取用户信息 -->
+    <select id="get" resultMap="businessMap">
+        SELECT
+          *
+
+        FROM
+          tb_business
+        WHERE id = #{id}
+    </select>
+
+    <!-- 新增日志记录 -->
+    <insert id="save" >
+        INSERT  INTO  tb_business (businessType,optTime,operator,source) VALUES (#{business.businessType, jdbcType=NUMERIC},#{business.optTime, jdbcType=VARCHAR},#{business.operator, jdbcType=NUMERIC},#{business.source, jdbcType=VARCHAR})
+    </insert>
+
+</mapper>

@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hgsoft.zengzhiyingyong.module.rbac.dao.mapper.VoucherMapper">
+    <!-- 开库单resultMap -->
+    <resultMap id="voucherMap" type="com.hgsoft.zengzhiyingyong.module.rbac.domain.Voucher">
+        <id column="id" property="id"/>
+        <result column="voucherid" property="voucherid"/>
+        <result column="orgnization" property="orgnization"/>
+        <result column="owner" property="owner"/>
+        <result column="createTime" property="creTime"/>
+        <result column="processtime" property="processTime"/>
+        <result column="endtime" property="endTime"/>
+        <result column="theme" property="theme"/>
+        <result column="status" property="status"/>
+        <result column="type" property="type"/>
+        <result column="description" property="description"/>
+    </resultMap>
+
+    <!-- user column  -->
+    <select id="query" resultMap="voucherMap">
+        select
+        top ${size} *
+        from(
+
+        select
+        u.id,
+        row_number() over(order by u.id DESC) as rownumber,
+        voucherid,
+        orgnization,
+        r.user_name as owner,
+        CONVERT(VARCHAR (10),u.createtime,120) as createtime ,
+        CONVERT(VARCHAR (10),u.endtime,120) as endtime,
+        CONVERT(VARCHAR (10),u.processtime,120) as processtime,
+        u.theme,
+        CASE u.status WHEN '0' THEN '注销'
+                      WHEN  '1' THEN '待发送'
+                      WHEN  '2' THEN '已执行'
+                      WHEN  '3' THEN '待通过'
+                      WHEN  '4' THEN '已通过'
+                      WHEN  '5' THEN '已驳回'
+        END  AS  status,
+        u.type,
+        u.description
+        from
+        tb_voucher u left join tb_user r on  u.owner = r.id
+        <include refid="whereid"></include>
+
+        )middle  where rownumber > #{skip}
+
+    </select>
+
+    <!-- where条件-->
+    <sql id="whereid">
+        <where>
+            <if test="user.id != null and user.id != ''">
+                AND u.owner = #{user.id, jdbcType=VARCHAR}
+            </if>
+            <if test="voucher.voucherid != null and voucher.voucherid != ''">
+                AND u.voucherid = #{voucher.voucherid, jdbcType=VARCHAR}
+            </if>
+            <if test="start != null and start != ''">
+                AND u.createTime &gt;= #{start, jdbcType=VARCHAR}
+            </if>
+            <if test="end != null and end != ''">
+                AND u.createTime  &lt;= #{end, jdbcType=VARCHAR}
+            </if>
+            <if test="voucher.type != 9 ">
+                AND u.type = #{voucher.type, jdbcType=NUMERIC}
+            </if>
+
+            <if test="voucher.status != null and voucher.status != '' and voucher.status != 9">
+                AND u.status = #{voucher.status, jdbcType=NUMERIC}
+            </if>
+            <if test="voucher.status == 9 ">
+                AND u.status IN (3,4,5)
+            </if>
+            <if test="voucher.conditions != null ">
+                AND u.id IN
+                <foreach item="item" collection="voucher.conditions" open="(" separator="," close=")">
+                    #{item, jdbcType=NUMERIC}
+                </foreach>
+
+            </if>
+        </where>
+    </sql>
+
+    <!-- 统计总数 -->
+    <select id="count" resultType="long">
+        SELECT
+          count(1)
+        FROM
+        tb_voucher u
+        <include refid="whereid"></include>
+    </select>
+
+    <!-- 根据id获取开库单信息 -->
+    <select id="get" resultMap="voucherMap">
+        SELECT
+          id,
+          voucherid,
+          orgnization,
+          type,
+          owner,
+          status,
+          description,
+          CONVERT(VARCHAR (10),createtime,120) as createtime ,
+          CONVERT(VARCHAR (10),endtime,120) as endtime,
+          CONVERT(VARCHAR (10),processtime,120) as processtime,
+          theme
+
+        FROM
+          tb_voucher
+        WHERE id = #{id}
+    </select>
+    <!-- 根据id获取开库单信息 -->
+    <select id="getVoucherByCode" resultMap="voucherMap">
+        SELECT
+          id,
+          voucherid,
+          orgnization,
+          type,
+          owner,
+          status,
+          description,
+          CONVERT(VARCHAR (10),createtime,120) as createtime ,
+          CONVERT(VARCHAR (10),endtime,120) as endtime,
+          CONVERT(VARCHAR (10),processtime,120) as processtime,
+          theme
+
+        FROM
+          tb_voucher
+        WHERE voucherid = #{voucherid}
+    </select>
+<!-- 根据id获取开库单详细信息 -->
+    <select id="getInfo" resultMap="voucherMap">
+        SELECT
+          v.id as id,
+          v.voucherid as voucherid,
+          case v.orgnization WHEN   0 THEN '联网中心'
+                           WHEN   1 THEN '工商银行'
+                           WHEN   2 THEN '农业银行'
+                           WHEN   3 THEN '中国银行'
+                           WHEN   4 THEN '建设银行'
+                           WHEN   5 THEN '农商'
+                           WHEN   6 THEN '邮储'
+                           end AS orgnization
+          ,
+          v.type as type,
+          u.user_name as owner,
+          v.status as status,
+          v.description as description,
+          CONVERT(VARCHAR (10),v.createtime,120) as createtime ,
+          CONVERT(VARCHAR (10),v.endtime,120) as endtime,
+          CONVERT(VARCHAR (10),v.processtime,120) as processtime,
+          v.theme as theme
+
+        FROM
+          tb_voucher v LEFT JOIN  tb_User u on v.owner = u.id
+        WHERE v.id = #{id}
+    </select>
+
+
+
+
+
+    <!-- 修改开库单 -->
+    <update id="update">
+        UPDATE tb_voucher SET status = #{voucher.status, jdbcType=NUMERIC}
+        <if test="voucher.voucherid != null and voucher.voucherid != ''">
+            ,voucherid = #{voucher.voucherid, jdbcType=VARCHAR}
+        </if>
+        <if test="voucher.orgnization != null and voucher.orgnization != ''">
+            ,orgnization = #{voucher.orgnization, jdbcType=VARCHAR}
+        </if>
+        <if test="voucher.processTime != null and voucher.processTime != ''">
+            ,processTime = #{voucher.processTime, jdbcType=TIMESTAMP}
+        </if>
+        <if test="voucher.owner != null and voucher.owner != ''">
+            ,owner = #{voucher.owner, jdbcType=VARCHAR}
+        </if>
+
+        <if test="voucher.orgnization != null and voucher.orgnization != ''">
+            ,endTime =  #{voucher.endTime, jdbcType=TIMESTAMP}
+        </if>
+        <if test="voucher.theme != null and voucher.theme != ''">
+            ,theme =  #{voucher.theme, jdbcType=VARCHAR}
+        </if>
+
+        <if test="voucher.type != null and voucher.type != ''">
+            ,type = #{voucher.type, jdbcType=NUMERIC}
+        </if>
+        <if test="voucher.description != null and voucher.description != ''">
+            ,description = #{voucher.description, jdbcType=VARCHAR}
+        </if>
+
+        WHERE id = #{voucher.id, jdbcType=NUMERIC}
+    </update>
+
+    <!-- 新增开库单 -->
+    <insert id="save" useGeneratedKeys="true" keyProperty="voucher.kid">
+
+        INSERT INTO tb_voucher(voucherid, orgnization, owner, createTime, endTime,processTime, theme,status,type,description)
+        VALUES (#{voucher.voucherid, jdbcType=VARCHAR}, #{voucher.orgnization, jdbcType=VARCHAR},
+        #{voucher.owner, jdbcType=VARCHAR}, #{voucher.createTime, jdbcType=TIMESTAMP},
+        #{voucher.endTime, jdbcType=TIMESTAMP},#{voucher.processTime, jdbcType=TIMESTAMP}, #{voucher.theme, jdbcType=VARCHAR}, #{voucher.status, jdbcType=NUMERIC}, #{voucher.type, jdbcType=NUMERIC},#{voucher.description, jdbcType=VARCHAR})
+
+    </insert>
+
+    <update id="delete">
+        update tb_Voucher set status = 0 where id = #{id}
+    </update>
+
+    <select id="generateVC" resultType="String">
+        SELECT top 1 voucherid from tb_Voucher(nolock) ORDER  BY  id DESC
+    </select>
+
+
+</mapper>
